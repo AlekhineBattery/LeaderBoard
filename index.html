@@ -715,7 +715,7 @@
                 <span class="hint">Second player must be within this many points of the limit</span>
             </div>
             <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">
-                <strong>Rule:</strong> Any player who crosses the score limit is <strong>eliminated</strong> immediately. If 3+ players exist <em>and</em> the 2nd highest player's score is within the gap of the limit, all remaining players <strong>reset</strong> to (2nd place score + 1). Otherwise the busted player(s) are just removed.
+                <strong>Rule:</strong> Any player who crosses the score limit is <strong>eliminated</strong> immediately. If the 2nd highest player's score is within the gap of the limit, all remaining players <strong>reset</strong> to (2nd place score + 1). Otherwise the busted player(s) are just removed.
             </p>
         </div>
 
@@ -1064,9 +1064,9 @@
 
             let resetHappened = false;
 
-            // Check if reset conditions are met: 3+ active players AND second highest is within gap of limit
-            const canReset = active.length >= 3 && secondHighest && secondHighest.total >= limit - gap;
-            console.log('[RummyStats] Reset check: active>=3 ?', active.length >= 3,
+            // Check if reset conditions are met: 2+ active players AND second highest is within gap of limit
+            const canReset = active.length >= 2 && secondHighest && secondHighest.total >= limit - gap;
+            console.log('[RummyStats] Reset check: active>=2 ?', active.length >= 2,
                         '| secondHighest.total >= limit-gap ?', secondHighest ? secondHighest.total + ' >= ' + (limit - gap) + ' = ' + (secondHighest.total >= limit - gap) : 'N/A',
                         '| Result:', canReset);
 
@@ -1105,9 +1105,7 @@
                 // No reset - just eliminate the busted player(s)
                 const names = bustedPlayers.map(t => t.player.name).join(', ');
                 let reason = '';
-                if (active.length < 3) {
-                    reason = 'only ' + active.length + ' players (need 3+)';
-                } else if (!secondHighest) {
+                if (!secondHighest) {
                     reason = 'no non-busted second player';
                 } else {
                     reason = 'gap not met: 2nd=' + secondHighest.total + ', need ≥' + (limit - gap);
