@@ -9,3 +9,7 @@ Thumbs.db
 .vscode/
 *.sublime-project
 *.sublime-workspace
+
+# Node
+node_modules/
+package-lock.json
