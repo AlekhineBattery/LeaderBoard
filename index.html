@@ -305,12 +305,17 @@
             font-weight: 700;
         }
 
-        table .loser {
+        table .eliminated {
             color: #e74c3c;
+            text-decoration: line-through;
         }
 
         .winner-highlight {
             background: rgba(46, 204, 113, 0.12) !important;
+        }
+
+        .eliminated-highlight {
+            background: rgba(231, 76, 60, 0.08) !important;
         }
 
         .empty-state {
@@ -362,6 +367,7 @@
             opacity: 0;
             transition: all 0.4s ease;
             z-index: 1000;
+            max-width: 400px;
         }
 
         .toast.show {
@@ -379,6 +385,10 @@
 
         .toast.info {
             background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .toast.warning {
+            background: linear-gradient(135deg, #e67e22, #d35400);
         }
 
         .game-summary {
@@ -419,56 +429,8 @@
             color: #3498db;
         }
 
-        .mode-toggle {
-            display: flex;
-            gap: 0;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-
-        .mode-toggle button {
-            padding: 10px 20px;
-            border: none;
-            background: transparent;
-            color: #aaa;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .mode-toggle button.active {
-            background: rgba(255, 215, 0, 0.15);
-            color: #ffd200;
-        }
-
-        .mode-toggle button:hover:not(.active) {
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-        }
-
-        .delete-round-btn {
-            background: none;
-            border: none;
+        .summary-card .value.limit-value {
             color: #e74c3c;
-            cursor: pointer;
-            font-size: 1rem;
-            padding: 4px 8px;
-            border-radius: 6px;
-            transition: all 0.2s;
-            opacity: 0.5;
-        }
-
-        .delete-round-btn:hover {
-            opacity: 1;
-            background: rgba(231, 76, 60, 0.15);
-        }
-
-        .total-score {
-            font-weight: 700;
-            font-size: 1.1rem;
         }
 
         .rank-badge {
@@ -487,58 +449,234 @@
         .rank-3 { background: rgba(205, 127, 50, 0.3); color: #cd7f32; }
         .rank-other { background: rgba(255, 255, 255, 0.1); color: #888; }
 
+        .settings-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .settings-row label {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .settings-row input {
+            width: 80px;
+            padding: 8px 12px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .settings-row input:focus {
+            border-color: #ffd200;
+        }
+
+        .settings-row .hint {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .bust-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: #e74c3c;
+            color: #fff;
+            margin-left: 4px;
+        }
+
+        .reset-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: #f7971e;
+            color: #1a1a2e;
+            margin-left: 4px;
+        }
+
+        .overflow-btn {
+            position: relative;
+        }
+
+        .overflow-btn .badge-count {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #e74c3c;
+            color: #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        /* History Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #ffd200;
+            font-size: 1.3rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        .history-item {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .history-item .history-date {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .history-item .history-players {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .history-item .history-player {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .history-item .history-player.winner {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            font-weight: 600;
+        }
+
+        .history-item .history-score {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-left: 4px;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: rgba(46, 204, 113, 0.15);
+            color: #2ecc71;
+        }
+
+        .status-finished {
+            background: rgba(52, 152, 219, 0.15);
+            color: #3498db;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            header h1 {
-                font-size: 1.8rem;
-            }
-
-            .container {
-                padding: 0;
-            }
-
-            .input-group {
-                flex-direction: column;
-            }
-
-            .input-group input,
-            .input-group select {
-                min-width: 100%;
-            }
-
-            .round-inputs {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            table th,
-            table td {
-                padding: 8px 10px;
-                font-size: 0.85rem;
-            }
-
-            .game-summary {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .action-buttons {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .action-buttons .btn {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .round-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
+            header h1 { font-size: 1.8rem; }
+            .container { padding: 0; }
+            .input-group { flex-direction: column; }
+            .input-group input, .input-group select { min-width: 100%; }
+            .round-inputs { grid-template-columns: 1fr 1fr; }
+            table th, table td { padding: 8px 10px; font-size: 0.85rem; }
+            .game-summary { grid-template-columns: repeat(2, 1fr); }
+            .action-buttons { flex-direction: column; width: 100%; }
+            .action-buttons .btn { width: 100%; justify-content: center; }
+            .round-header { flex-direction: column; align-items: flex-start; }
+            .modal { padding: 20px; margin: 10px; }
         }
 
         @media (max-width: 480px) {
-            .round-inputs {
-                grid-template-columns: 1fr;
-            }
+            .round-inputs { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -546,7 +684,7 @@
     <div class="container">
         <header>
             <h1>🃏 RummyStats</h1>
-            <p>Track your Rummy scores across multiple rounds</p>
+            <p>Track your Rummy scores with auto-reset rules & game history</p>
         </header>
 
         <!-- Players Section -->
@@ -559,6 +697,26 @@
                 <button class="btn btn-primary" onclick="addPlayer()">+ Add Player</button>
             </div>
             <div id="playersList" class="players-list"></div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">⚙️</span> Game Settings
+            </div>
+            <div class="settings-row">
+                <label for="scoreLimit">Score limit for bust:</label>
+                <input type="number" id="scoreLimit" value="200" min="50" max="1000" />
+                <span class="hint">When a player crosses this, auto-reset may trigger</span>
+            </div>
+            <div class="settings-row">
+                <label for="bustGap">Bust gap threshold:</label>
+                <input type="number" id="bustGap" value="25" min="5" max="100" />
+                <span class="hint">Second player must be within this many points of the limit</span>
+            </div>
+            <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">
+                <strong>Rule:</strong> When a player crosses the score limit, if 3+ players exist <em>and</em> the 2nd highest player's score is within the gap of the limit, all players reset to (2nd place score + 1). The busting player is eliminated.
+            </p>
         </div>
 
         <!-- Score Entry Section -->
@@ -577,8 +735,14 @@
                         <button class="btn btn-secondary btn-sm" onclick="undoLastRound()" id="undoBtn" disabled>
                             ↩️ Undo Last Round
                         </button>
+                        <button class="btn btn-secondary btn-sm" onclick="showHistory()">
+                            📜 History
+                        </button>
+                        <button class="btn btn-success btn-sm" onclick="finishGame()">
+                            🏁 Finish Game
+                        </button>
                         <button class="btn btn-danger btn-sm" onclick="resetGame()">
-                            🗑️ Reset Game
+                            🗑️ Reset
                         </button>
                     </div>
                 </div>
@@ -587,6 +751,14 @@
                     <button class="btn btn-success" onclick="submitRound()">✓ Submit Round</button>
                 </div>
             </div>
+        </div>
+
+        <!-- Eliminated Players Notice -->
+        <div class="card" id="eliminatedCard" style="display: none;">
+            <div class="card-title">
+                <span class="icon">💀</span> Eliminated Players
+            </div>
+            <div id="eliminatedList" class="players-list"></div>
         </div>
 
         <!-- Scoreboard Section -->
@@ -613,11 +785,29 @@
 
     <div id="toast" class="toast"></div>
 
+    <!-- History Modal -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>📜 Game History</h2>
+                <button class="modal-close" onclick="closeHistory()">✕</button>
+            </div>
+            <div class="history-actions">
+                <button class="btn btn-danger btn-sm" onclick="clearHistory()">🗑️ Clear All History</button>
+            </div>
+            <div id="historyContent">
+                <div class="empty-history">No completed games yet.</div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==================== STATE ====================
         const state = {
             players: [],
             rounds: [], // each round is { scores: { playerId: score } }
+            eliminatedPlayerIds: new Set(), // players who busted
+            gameFinished: false,
             playerColors: [
                 '#f7971e', '#e74c3c', '#2ecc71', '#3498db',
                 '#9b59b6', '#1abc9c', '#e67e22', '#34495e',
@@ -638,14 +828,28 @@
         const scoreEntryContent = $('scoreEntryContent');
         const undoBtn = $('undoBtn');
         const playerNameInput = $('playerNameInput');
+        const eliminatedCard = $('eliminatedCard');
+        const eliminatedList = $('eliminatedList');
 
         // ==================== HELPERS ====================
+        function getScoreLimit() {
+            return parseInt($('scoreLimit').value) || 200;
+        }
+
+        function getBustGap() {
+            return parseInt($('bustGap').value) || 25;
+        }
+
         function getPlayerColor(index) {
             return state.playerColors[index % state.playerColors.length];
         }
 
         function getCurrentRound() {
             return state.rounds.length + 1;
+        }
+
+        function getActivePlayers() {
+            return state.players.filter(p => !state.eliminatedPlayerIds.has(p.id));
         }
 
         function getPlayerTotal(playerId) {
@@ -658,28 +862,39 @@
             return state.players.find(p => p.id === id);
         }
 
-        function getPlayerTotals() {
-            return state.players.map(p => ({
+        function getActivePlayerTotals() {
+            return getActivePlayers().map(p => ({
                 player: p,
                 total: getPlayerTotal(p.id),
             })).sort((a, b) => a.total - b.total);
         }
 
         function getGameWinner() {
-            const totals = getPlayerTotals();
+            const totals = getActivePlayerTotals();
             if (totals.length === 0) return null;
             return totals[0];
         }
 
         function getAverageScore() {
-            if (state.rounds.length === 0 || state.players.length === 0) return 0;
+            const active = getActivePlayers();
+            if (state.rounds.length === 0 || active.length === 0) return 0;
             let totalScore = 0;
+            let count = 0;
             state.rounds.forEach(round => {
-                Object.values(round.scores).forEach(score => {
-                    totalScore += score;
+                active.forEach(p => {
+                    if (round.scores[p.id] !== undefined) {
+                        totalScore += round.scores[p.id];
+                        count++;
+                    }
                 });
             });
-            return Math.round(totalScore / (state.rounds.length * state.players.length));
+            return count > 0 ? Math.round(totalScore / count) : 0;
+        }
+
+        function getGameEndedReason() {
+            if (state.gameFinished) return 'Game finished manually';
+            if (getActivePlayers().length <= 1) return 'Only one player remaining';
+            return null;
         }
 
         // ==================== TOAST ====================
@@ -690,7 +905,7 @@
             clearTimeout(toast._timeout);
             toast._timeout = setTimeout(() => {
                 toast.classList.remove('show');
-            }, 2500);
+            }, 3500);
         }
 
         // ==================== PLAYERS ====================
@@ -729,17 +944,18 @@
                 if (!confirm(`Removing "${player.name}" will delete all their scores across ${state.rounds.length} round(s). Continue?`)) {
                     return;
                 }
-                // Remove player's scores from all rounds
                 state.rounds.forEach(round => {
                     delete round.scores[playerId];
                 });
             }
+            state.eliminatedPlayerIds.delete(playerId);
             state.players = state.players.filter(p => p.id !== playerId);
             renderPlayers();
             updateScoreEntryVisibility();
             renderRoundInputs();
             renderScoreboard();
             updateUndoButton();
+            renderEliminated();
             showToast(`${player.name} removed.`, 'info');
         }
 
@@ -751,17 +967,21 @@
 
         // ==================== ROUND INPUTS ====================
         function renderRoundInputs() {
-            if (state.players.length < 2) {
-                roundInputsEl.innerHTML = '';
+            const active = getActivePlayers();
+            if (active.length < 2) {
+                roundInputsEl.innerHTML = '<p style="color: #888; text-align: center;">Need at least 2 active players to continue.</p>';
+                if (state.gameFinished) roundLabel.textContent = 'Game Over';
+                else roundLabel.textContent = `Round ${getCurrentRound()}`;
                 return;
             }
 
             const roundNum = getCurrentRound();
-            roundLabel.textContent = `Round ${roundNum}`;
+            roundLabel.textContent = state.gameFinished ? 'Game Over' : `Round ${roundNum}`;
 
             let html = '';
-            state.players.forEach((player, index) => {
-                const color = getPlayerColor(index);
+            active.forEach((player, index) => {
+                const globalIndex = state.players.indexOf(player);
+                const color = getPlayerColor(globalIndex);
                 html += `
                     <div class="round-input-item">
                         <label>
@@ -775,6 +995,7 @@
                             placeholder="Score"
                             min="0"
                             max="999"
+                            ${state.gameFinished ? 'disabled' : ''}
                             onkeydown="handleScoreKeydown(event, ${player.id})"
                         />
                     </div>
@@ -783,17 +1004,17 @@
 
             roundInputsEl.innerHTML = html;
 
-            // Auto-focus first input
-            setTimeout(() => {
-                const firstInput = document.querySelector('.score-input');
-                if (firstInput) firstInput.focus();
-            }, 100);
+            if (!state.gameFinished) {
+                setTimeout(() => {
+                    const firstInput = document.querySelector('.score-input:not(:disabled)');
+                    if (firstInput) firstInput.focus();
+                }, 100);
+            }
         }
 
         function handleScoreKeydown(e, playerId) {
             if (e.key === 'Enter') {
-                // Move to next input or submit
-                const inputs = document.querySelectorAll('.score-input');
+                const inputs = document.querySelectorAll('.score-input:not(:disabled)');
                 const currentIndex = Array.from(inputs).indexOf(e.target);
                 if (currentIndex < inputs.length - 1) {
                     inputs[currentIndex + 1].focus();
@@ -803,10 +1024,117 @@
             }
         }
 
+        // ==================== ELIMINATED / BUST LOGIC ====================
+        function checkBustAndReset() {
+            const limit = getScoreLimit();
+            const gap = getBustGap();
+            const active = getActivePlayers();
+
+            if (active.length < 3) return false; // need 3+ players for auto-reset
+
+            const totals = active.map(p => ({
+                player: p,
+                total: getPlayerTotal(p.id),
+            })).sort((a, b) => b.total - a.total); // highest first
+
+            const highest = totals[0];
+            const secondHighest = totals[1];
+
+            // Check if highest crossed the limit
+            if (highest.total > limit) {
+                // Check if second highest is within (limit - gap) of limit
+                // i.e. secondHighest.total >= limit - gap
+                if (secondHighest.total >= limit - gap) {
+                    // Auto-reset: all active players go to secondHighest.total + 1
+                    const newBase = secondHighest.total + 1;
+                    const resetPlayerId = highest.player.id;
+
+                    // Mark the busting player as eliminated
+                    state.eliminatedPlayerIds.add(resetPlayerId);
+
+                    // For remaining active players, adjust their scores
+                    // We do this by recalculating: set cumulative total to newBase
+                    // This means we need to adjust the latest round's scores
+                    const remainingActive = active.filter(p => p.id !== resetPlayerId);
+
+                    // Calculate what each player's total currently is
+                    // We'll add a "reset adjustment" round
+                    const adjustmentScores = {};
+                    remainingActive.forEach(p => {
+                        const currentTotal = getPlayerTotal(p.id);
+                        const diff = newBase - currentTotal;
+                        // Add the difference as a new "round" entry
+                        // But if diff is negative, we need to subtract - handled by adding negative score
+                        // Actually let's just add a new round entry with the adjustment
+                        adjustmentScores[p.id] = Math.max(0, diff); // can't go below 0
+                    });
+
+                    // Also add 0 for eliminated player for consistency
+                    adjustmentScores[resetPlayerId] = getPlayerTotal(resetPlayerId); // keep their total as is
+
+                    state.rounds.push({ scores: adjustmentScores, isReset: true, bustedPlayerId: resetPlayerId });
+
+                    showToast(
+                        `💥 ${highest.player.name} busted at ${highest.total} points (limit: ${limit})! ` +
+                        `All players reset to ${newBase}. ${highest.player.name} is eliminated!`,
+                        'warning'
+                    );
+
+                    renderEliminated();
+                    renderScoreboard();
+                    renderRoundInputs();
+                    updateUndoButton();
+                    updateSummary();
+
+                    // Check if game should end
+                    if (getActivePlayers().length <= 1) {
+                        state.gameFinished = true;
+                        renderRoundInputs();
+                        saveHistory();
+                        showToast(`🏆 Game Over! ${getGameWinner().player.name} wins!`, 'success');
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function renderEliminated() {
+            const eliminated = state.players.filter(p => state.eliminatedPlayerIds.has(p.id));
+            if (eliminated.length === 0) {
+                eliminatedCard.style.display = 'none';
+                return;
+            }
+
+            eliminatedCard.style.display = 'block';
+            let html = '';
+            eliminated.forEach((player, index) => {
+                const globalIndex = state.players.indexOf(player);
+                const color = getPlayerColor(globalIndex);
+                html += `
+                    <div class="player-badge" style="opacity: 0.6;">
+                        <span class="player-color" style="background: ${color};"></span>
+                        ${player.name}
+                        <span class="bust-badge">BUST</span>
+                        <span style="font-size:0.8rem;color:#888;">(${getPlayerTotal(player.id)} pts)</span>
+                    </div>
+                `;
+            });
+            eliminatedList.innerHTML = html;
+        }
+
         // ==================== ROUND SUBMISSION ====================
         function submitRound() {
-            if (state.players.length < 2) {
-                showToast('Please add at least 2 players.', 'error');
+            if (state.gameFinished) {
+                showToast('This game is finished. Start a new game to continue.', 'error');
+                return;
+            }
+
+            const active = getActivePlayers();
+            if (active.length < 2) {
+                showToast('Need at least 2 active players.', 'error');
                 return;
             }
 
@@ -814,7 +1142,7 @@
             let allFilled = true;
             let hasScore = false;
 
-            state.players.forEach(player => {
+            active.forEach(player => {
                 const input = $(`score_${player.id}`);
                 if (!input) return;
                 const val = input.value.trim();
@@ -830,7 +1158,7 @@
             });
 
             if (!allFilled) {
-                showToast('Please enter a score for all players.', 'error');
+                showToast('Please enter a score for all active players.', 'error');
                 return;
             }
 
@@ -839,26 +1167,170 @@
                 return;
             }
 
-            // Check for duplicate score entries in this round (optional warning)
-            const scoreValues = Object.values(scores);
-            const uniqueScores = new Set(scoreValues);
-            if (scoreValues.length !== uniqueScores.length) {
-                if (!confirm('Some players have the same score. Are you sure?')) {
-                    return;
+            // Add scores for eliminated players as 0 (they don't play)
+            state.players.forEach(p => {
+                if (state.eliminatedPlayerIds.has(p.id) && scores[p.id] === undefined) {
+                    scores[p.id] = 0;
                 }
-            }
+            });
 
-            state.rounds.push({ scores: { ...scores } });
+            state.rounds.push({ scores: { ...scores }, isReset: false });
             renderScoreboard();
-            renderRoundInputs();
             updateUndoButton();
             updateSummary();
+
             showToast(`Round ${state.rounds.length} recorded!`, 'success');
+
+            // Check bust/reset AFTER round is recorded
+            const bustTriggered = checkBustAndReset();
+
+            if (!bustTriggered) {
+                renderRoundInputs();
+            }
+        }
+
+        // ==================== FINISH GAME ====================
+        function finishGame() {
+            if (state.gameFinished) return;
+            if (state.rounds.length === 0) {
+                showToast('No rounds to finish.', 'error');
+                return;
+            }
+            const active = getActivePlayers();
+            if (active.length <= 1) {
+                // Auto-finish
+            }
+            if (!confirm('Finish the game and save to history?')) return;
+
+            state.gameFinished = true;
+            renderRoundInputs();
+            saveHistory();
+            showToast('Game finished! Saved to history.', 'success');
+        }
+
+        // ==================== HISTORY (localStorage) ====================
+        function getHistory() {
+            try {
+                return JSON.parse(localStorage.getItem('rummystats_history') || '[]');
+            } catch { return []; }
+        }
+
+        function saveHistoryItem(item) {
+            const history = getHistory();
+            history.unshift(item);
+            // Keep max 50 games
+            if (history.length > 50) history.length = 50;
+            localStorage.setItem('rummystats_history', JSON.stringify(history));
+        }
+
+        function saveHistory() {
+            const totals = state.players.map(p => ({
+                name: p.name,
+                total: getPlayerTotal(p.id),
+                eliminated: state.eliminatedPlayerIds.has(p.id),
+            })).sort((a, b) => a.total - b.total);
+
+            const winner = getGameWinner();
+            const historyItem = {
+                id: Date.now(),
+                date: new Date().toLocaleString(),
+                rounds: state.rounds.length,
+                players: state.players.length,
+                scoreLimit: getScoreLimit(),
+                bustGap: getBustGap(),
+                winner: winner ? winner.player.name : 'N/A',
+                winnerTotal: winner ? winner.total : 0,
+                totals: totals,
+            };
+
+            saveHistoryItem(historyItem);
+        }
+
+        function showHistory() {
+            renderHistory();
+            $('historyModal').classList.add('show');
+        }
+
+        function closeHistory() {
+            $('historyModal').classList.remove('show');
+        }
+
+        function renderHistory() {
+            const history = getHistory();
+            const container = $('historyContent');
+
+            if (history.length === 0) {
+                container.innerHTML = '<div class="empty-history">No completed games yet.</div>';
+                return;
+            }
+
+            let html = '';
+            history.forEach((game, idx) => {
+                html += `
+                    <div class="history-item" onclick="loadHistory(${idx})">
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                            <span class="history-date">${game.date || 'Unknown date'}</span>
+                            <span>
+                                <span class="status-indicator status-finished">Finished</span>
+                            </span>
+                        </div>
+                        <div style="margin-top:8px;display:flex;gap:15px;flex-wrap:wrap;font-size:0.9rem;">
+                            <span>🏆 <strong>${game.winner}</strong> (${game.winnerTotal} pts)</span>
+                            <span>🔄 ${game.rounds} rounds</span>
+                            <span>👥 ${game.players} players</span>
+                            <span>🎯 Limit: ${game.scoreLimit}</span>
+                        </div>
+                        <div class="history-players">
+                            ${game.totals.map(t => `
+                                <span class="history-player ${t.name === game.winner ? 'winner' : ''}">
+                                    ${t.name}
+                                    <span class="history-score">(${t.total})</span>
+                                    ${t.eliminated ? '<span class="bust-badge">BUST</span>' : ''}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function loadHistory(idx) {
+            // Just show details for now - could add full restore later
+            const history = getHistory();
+            const game = history[idx];
+            if (!game) return;
+            showToast(`Game from ${game.date}: ${game.winner} won with ${game.winnerTotal} pts`, 'info');
+        }
+
+        function clearHistory() {
+            if (!confirm('Delete all game history? This cannot be undone.')) return;
+            localStorage.removeItem('rummystats_history');
+            renderHistory();
+            showToast('History cleared.', 'info');
         }
 
         // ==================== UNDO ====================
         function undoLastRound() {
             if (state.rounds.length === 0) return;
+
+            const lastRound = state.rounds[state.rounds.length - 1];
+
+            // If the last round was a reset, we need to also un-eliminate the player
+            if (lastRound.isReset && lastRound.bustedPlayerId) {
+                if (!confirm(`Undo the bust/reset? This will revive ${getPlayerById(lastRound.bustedPlayerId)?.name || 'the busted player'}.`)) return;
+                state.eliminatedPlayerIds.delete(lastRound.bustedPlayerId);
+                state.rounds.pop();
+                renderEliminated();
+                renderScoreboard();
+                renderRoundInputs();
+                updateUndoButton();
+                updateSummary();
+                showToast('Bust/reset undone.', 'info');
+                return;
+            }
+
             const roundNum = state.rounds.length;
             if (!confirm(`Undo Round ${roundNum}? This will remove all scores from this round.`)) return;
             state.rounds.pop();
@@ -876,13 +1348,22 @@
         // ==================== RESET ====================
         function resetGame() {
             if (state.rounds.length === 0 && state.players.length === 0) return;
-            if (!confirm('Are you sure you want to reset the entire game? This will delete all rounds and scores.')) return;
+            if (!confirm('Reset the current game? Your players will be kept but all rounds and scores will be deleted.')) return;
+
+            // Save current game to history if it has rounds
+            if (state.rounds.length > 0 && getActivePlayers().length > 0) {
+                saveHistory();
+            }
+
             state.rounds = [];
+            state.eliminatedPlayerIds = new Set();
+            state.gameFinished = false;
+            renderEliminated();
             renderScoreboard();
             renderRoundInputs();
             updateUndoButton();
             updateSummary();
-            showToast('Game reset!', 'info');
+            showToast('Game reset! Previous game saved to history.', 'info');
         }
 
         // ==================== RENDER PLAYERS ====================
@@ -895,10 +1376,12 @@
             let html = '';
             state.players.forEach((player, index) => {
                 const color = getPlayerColor(index);
+                const isEliminated = state.eliminatedPlayerIds.has(player.id);
                 html += `
-                    <div class="player-badge">
+                    <div class="player-badge" style="${isEliminated ? 'opacity: 0.5;' : ''}">
                         <span class="player-color" style="background: ${color};"></span>
                         ${player.name}
+                        ${isEliminated ? '<span class="bust-badge">BUST</span>' : ''}
                         <button class="remove-btn" onclick="removePlayer(${player.id})" title="Remove player">×</button>
                     </div>
                 `;
@@ -920,6 +1403,7 @@
 
         // ==================== SCOREBOARD ====================
         function renderScoreboard() {
+            const active = getActivePlayers();
             if (state.players.length === 0 || state.rounds.length === 0) {
                 scoreboardContent.innerHTML = `
                     <div class="empty-state">
@@ -931,33 +1415,48 @@
                 return;
             }
 
-            const totals = getPlayerTotals();
-            const winnerTotal = totals.length > 0 ? totals[0].total : 0;
+            const totals = getActivePlayerTotals();
 
             // Build table
             let html = '<div class="table-wrapper"><table>';
-            
+
             // Header row
             html += '<thead><tr><th>Rank</th><th>Player</th>';
             for (let i = 0; i < state.rounds.length; i++) {
-                html += `<th>R${i + 1}</th>`;
+                const r = state.rounds[i];
+                let label = `R${i + 1}`;
+                if (r.isReset) label = `R${i + 1}🔄`;
+                html += `<th title="${r.isReset ? 'Reset round' : ''}">${label}</th>`;
             }
-            html += '<th>Total</th><th></th></tr></thead><tbody>';
+            html += '<th>Total</th><th>Status</th></tr></thead><tbody>';
 
-            // Player rows
-            totals.forEach((item, rank) => {
+            // All players sorted by total
+            const allTotals = state.players.map(p => ({
+                player: p,
+                total: getPlayerTotal(p.id),
+                eliminated: state.eliminatedPlayerIds.has(p.id),
+            })).sort((a, b) => {
+                if (a.eliminated && !b.eliminated) return 1;
+                if (!a.eliminated && b.eliminated) return -1;
+                return a.total - b.total;
+            });
+
+            allTotals.forEach((item, rank) => {
                 const player = item.player;
                 const playerIndex = state.players.indexOf(player);
                 const color = getPlayerColor(playerIndex);
-                const isWinner = rank === 0;
+                const isWinner = rank === 0 && !item.eliminated;
+                const isEliminated = item.eliminated;
 
                 let rankClass = 'rank-other';
                 if (rank === 0) rankClass = 'rank-1';
                 else if (rank === 1) rankClass = 'rank-2';
                 else if (rank === 2) rankClass = 'rank-3';
 
-                html += `<tr class="${isWinner ? 'winner-highlight' : ''}">`;
-                html += `<td><span class="rank-badge ${rankClass}">${rank + 1}</span></td>`;
+                const rowClass = isWinner ? 'winner-highlight' : (isEliminated ? 'eliminated-highlight' : '');
+
+                html += `<tr class="${rowClass}">`;
+                html += `<td><span class="rank-badge ${rankClass}">${isEliminated ? '💀' : rank + 1}</span></td>`;
                 html += `<td style="text-align: left;">
                             <span class="color-dot" style="background: ${color}; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px;"></span>
                             ${player.name}
@@ -965,11 +1464,16 @@
 
                 for (let i = 0; i < state.rounds.length; i++) {
                     const score = state.rounds[i].scores[player.id];
-                    html += `<td>${score !== undefined ? score : '-'}</td>`;
+                    let scoreDisplay = score !== undefined ? score : '-';
+                    if (state.rounds[i].isReset && score !== undefined) {
+                        scoreDisplay = `${score}${state.rounds[i].bustedPlayerId === player.id ? '💥' : '🔄'}`;
+                    }
+                    html += `<td>${scoreDisplay}</td>`;
                 }
 
                 html += `<td class="total-score ${isWinner ? 'winner' : ''}">${item.total}</td>`;
-                html += '<td></td></tr>';
+                html += `<td>${isEliminated ? '<span class="bust-badge">BUST</span>' : (isWinner ? '🏆' : '')}</td>`;
+                html += '</tr>';
             });
 
             html += '</tbody></table></div>';
@@ -980,16 +1484,16 @@
 
         // ==================== SUMMARY ====================
         function updateSummary() {
+            const active = getActivePlayers();
             if (state.players.length === 0 || state.rounds.length === 0) {
                 gameSummaryEl.innerHTML = '';
                 return;
             }
 
-            const totals = getPlayerTotals();
-            const winner = totals[0];
-
+            const winner = getGameWinner();
             const avgScore = getAverageScore();
             const maxRound = state.rounds.length;
+            const limit = getScoreLimit();
 
             let html = `
                 <div class="summary-card">
@@ -997,39 +1501,58 @@
                     <div class="value rounds-value">${maxRound}</div>
                 </div>
                 <div class="summary-card">
-                    <div class="label">Players</div>
-                    <div class="value players-value">${state.players.length}</div>
+                    <div class="label">Active Players</div>
+                    <div class="value players-value">${active.length} / ${state.players.length}</div>
                 </div>
                 <div class="summary-card">
                     <div class="label">Avg Score/Player</div>
                     <div class="value">${avgScore}</div>
                 </div>
                 <div class="summary-card">
-                    <div class="label">🏆 Winner</div>
-                    <div class="value winner-value">${winner.player.name}</div>
-                    <div class="label">Total: ${winner.total} points</div>
+                    <div class="label">Score Limit</div>
+                    <div class="value limit-value">${limit}</div>
                 </div>
             `;
+
+            if (winner) {
+                html += `
+                    <div class="summary-card">
+                        <div class="label">🏆 Leader</div>
+                        <div class="value winner-value">${winner.player.name}</div>
+                        <div class="label">Total: ${winner.total} points</div>
+                    </div>
+                `;
+            }
+
+            if (getGameEndedReason()) {
+                html += `
+                    <div class="summary-card" style="border-color: rgba(46, 204, 113, 0.3);">
+                        <div class="label">Game Status</div>
+                        <div class="value" style="color: #2ecc71; font-size: 1.2rem;">✅ Finished</div>
+                        <div class="label">${getGameEndedReason()}</div>
+                    </div>
+                `;
+            }
 
             gameSummaryEl.innerHTML = html;
         }
 
         // ==================== KEYBOARD SHORTCUTS ====================
         document.addEventListener('keydown', (e) => {
-            // Ctrl+Enter to submit round
             if (e.ctrlKey && e.key === 'Enter') {
                 e.preventDefault();
                 submitRound();
             }
-            // Ctrl+Z to undo (prevent browser undo)
             if (e.ctrlKey && e.key === 'z' && !e.target.closest('input')) {
                 e.preventDefault();
                 undoLastRound();
             }
+            if (e.key === 'Escape') {
+                closeHistory();
+            }
         });
 
         // ==================== INIT ====================
-        // Add some demo players for easy testing
         function initDemo() {
             const demoPlayers = ['Alice', 'Bob', 'Charlie', 'Diana'];
             demoPlayers.forEach(name => {
@@ -1042,11 +1565,13 @@
             showToast('Demo players loaded! Start entering scores.', 'info');
         }
 
-        // Uncomment to auto-load demo
         initDemo();
-
-        // Player name input enter key
         playerNameInput.addEventListener('keydown', handlePlayerKeydown);
+        renderEliminated();
+
+        // Update summary when settings change
+        $('scoreLimit').addEventListener('change', () => { updateSummary(); renderScoreboard(); });
+        $('bustGap').addEventListener('change', () => { updateSummary(); });
     </script>
 </body>
 </html>
