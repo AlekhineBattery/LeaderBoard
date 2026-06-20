@@ -1038,12 +1038,24 @@
                 total: getPlayerTotal(p.id),
             })).sort((a, b) => b.total - a.total);
 
+            console.log('[RummyStats] Check bust/reset:', JSON.stringify(totals.map(t => ({name: t.player.name, total: t.total}))), 'limit:', limit, 'gap:', gap);
+
             // Find all players who crossed the limit
             const bustedPlayers = totals.filter(t => t.total > limit);
-            if (bustedPlayers.length === 0) return false;
+            if (bustedPlayers.length === 0) {
+                console.log('[RummyStats] No busted players');
+                return false;
+            }
 
             const highest = bustedPlayers[0]; // highest scoring busted player
-            const secondHighest = totals.find(t => !state.eliminatedPlayerIds.has(t.player.id) && t.player.id !== highest.player.id);
+
+            // Find the second highest NON-busted player (note: totals is before elimination)
+            // We find the first player in totals that is NOT the highest busted player AND NOT also busted
+            const secondHighest = totals.find(t => t.player.id !== highest.player.id && !bustedPlayers.some(b => b.player.id === t.player.id));
+
+            console.log('[RummyStats] Highest busted:', highest.player.name, highest.total,
+                        '| Second highest non-busted:', secondHighest ? secondHighest.player.name + '=' + secondHighest.total : 'NONE',
+                        '| Active count:', active.length);
 
             // Always eliminate the busting player(s)
             bustedPlayers.forEach(t => {
@@ -1053,19 +1065,27 @@
             let resetHappened = false;
 
             // Check if reset conditions are met: 3+ active players AND second highest is within gap of limit
-            if (active.length >= 3 && secondHighest && secondHighest.total >= limit - gap) {
+            const canReset = active.length >= 3 && secondHighest && secondHighest.total >= limit - gap;
+            console.log('[RummyStats] Reset check: active>=3 ?', active.length >= 3,
+                        '| secondHighest.total >= limit-gap ?', secondHighest ? secondHighest.total + ' >= ' + (limit - gap) + ' = ' + (secondHighest.total >= limit - gap) : 'N/A',
+                        '| Result:', canReset);
+
+            if (canReset) {
                 // Auto-reset: all remaining active players go to secondHighest.total + 1
                 const newBase = secondHighest.total + 1;
                 const remainingActive = active.filter(p => !state.eliminatedPlayerIds.has(p.id));
+
+                console.log('[RummyStats] Resetting to', newBase, 'for', remainingActive.map(p => p.name));
 
                 const adjustmentScores = {};
                 remainingActive.forEach(p => {
                     const currentTotal = getPlayerTotal(p.id);
                     const diff = newBase - currentTotal;
                     adjustmentScores[p.id] = Math.max(0, diff);
+                    console.log('[RummyStats]', p.name, 'current:', currentTotal, 'diff:', diff, '-> new total:', currentTotal + Math.max(0, diff));
                 });
 
-                // Add scores for eliminated players (keep their total unchanged)
+                // Add scores for eliminated players
                 state.players.forEach(p => {
                     if (state.eliminatedPlayerIds.has(p.id) && adjustmentScores[p.id] === undefined) {
                         adjustmentScores[p.id] = 0;
@@ -1075,8 +1095,8 @@
                 state.rounds.push({ scores: adjustmentScores, isReset: true, bustedPlayerId: highest.player.id });
 
                 showToast(
-                    `💥 ${highest.player.name} busted at ${highest.total} points (limit: ${limit})! ` +
-                    `All players reset to ${newBase}. ${highest.player.name} is eliminated!`,
+                    `💥 ${highest.player.name} busted at ${highest.total} pts (limit: ${limit})! ` +
+                    `Others reset to ${newBase}. ${highest.player.name} eliminated!`,
                     'warning'
                 );
 
@@ -1084,8 +1104,16 @@
             } else {
                 // No reset - just eliminate the busted player(s)
                 const names = bustedPlayers.map(t => t.player.name).join(', ');
+                let reason = '';
+                if (active.length < 3) {
+                    reason = 'only ' + active.length + ' players (need 3+)';
+                } else if (!secondHighest) {
+                    reason = 'no non-busted second player';
+                } else {
+                    reason = 'gap not met: 2nd=' + secondHighest.total + ', need ≥' + (limit - gap);
+                }
                 showToast(
-                    `💥 ${names} busted at over ${limit} points and ${active.length >= 3 ? 'the gap condition was not met' : 'there are not enough players'}! Eliminated.`,
+                    `💥 ${names} eliminated (${reason})`,
                     'warning'
                 );
             }
