@@ -715,7 +715,7 @@
                 <span class="hint">Second player must be within this many points of the limit</span>
             </div>
             <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">
-                <strong>Rule:</strong> When a player crosses the limit, ALL players <strong>reset</strong> to (2nd place + 1). If the 2nd highest player's score is within the gap of the limit, the busting player is <strong>eliminated</strong>. Otherwise everyone continues.
+                <strong>Rule:</strong> When a player crosses the limit, only the busting player <strong>resets</strong> to (2nd place score + 1). If the 2nd highest player's score is within the gap of the limit, the busting player is <strong>eliminated</strong>. Otherwise they continue with the reset.
             </p>
         </div>
 
@@ -1057,69 +1057,69 @@
                         '| Second highest non-busted:', secondHighest ? secondHighest.player.name + '=' + secondHighest.total : 'NONE',
                         '| Active count:', active.length);
 
-            // Always eliminate the busting player(s)
-            bustedPlayers.forEach(t => {
-                state.eliminatedPlayerIds.add(t.player.id);
-            });
-
             let resetHappened = false;
 
-            // RESET always happens when someone busts - all remaining players go to secondHighest.total + 1
+            // Only the busting player(s) get reset to (second highest + 1)
             const newBase = secondHighest ? secondHighest.total + 1 : 0;
-            const remainingActive = active.filter(p => !state.eliminatedPlayerIds.has(p.id));
+            console.log('[RummyStats] Busting players will be reset to', newBase);
 
-            console.log('[RummyStats] Resetting remaining players to', newBase, 'for', remainingActive.map(p => p.name));
-
+            // For non-busted players, their scores remain unchanged this round
             const adjustmentScores = {};
-            remainingActive.forEach(p => {
-                const currentTotal = getPlayerTotal(p.id);
-                const diff = newBase - currentTotal;
-                adjustmentScores[p.id] = Math.max(0, diff);
-                console.log('[RummyStats]', p.name, 'current:', currentTotal, 'diff:', diff, '-> new total:', currentTotal + Math.max(0, diff));
+            
+            // Non-busted active players keep their current round score (0 adjustment needed)
+            const nonBustedActive = active.filter(p => !bustedPlayers.some(b => b.player.id === p.id));
+            nonBustedActive.forEach(p => {
+                // Keep their just-entered score as-is - no adjustment
+                // Their current round score was already pushed in submitRound
+                // We just need to leave their score as-is by setting adjustment to 0
+                adjustmentScores[p.id] = 0;
             });
 
-            // Add scores for eliminated players
+            // Add scores for already-eliminated players (previous busts) as 0
             state.players.forEach(p => {
                 if (state.eliminatedPlayerIds.has(p.id) && adjustmentScores[p.id] === undefined) {
                     adjustmentScores[p.id] = 0;
                 }
             });
 
-            state.rounds.push({ scores: adjustmentScores, isReset: true, bustedPlayerId: highest.player.id });
-
             // Determine if the busting player should be eliminated based on gap condition
             const gapMet = active.length >= 2 && secondHighest && secondHighest.total >= limit - gap;
-            if (!gapMet && bustedPlayers.length > 0) {
-                // Revive the busted player - they just reset like everyone else
+
+            if (gapMet) {
+                // Busting player is eliminated - set their reset score and mark eliminated
                 bustedPlayers.forEach(t => {
+                    const currentTotal = getPlayerTotal(t.player.id);
+                    const diff = newBase - currentTotal;
+                    adjustmentScores[t.player.id] = diff; // Allow negative to bring score DOWN
+                    state.eliminatedPlayerIds.add(t.player.id);
+                    console.log('[RummyStats]', t.player.name, 'BUSTED & ELIMINATED: current:', currentTotal, 'diff:', diff, '-> new total:', currentTotal + diff);
+                });
+            } else {
+                // Busting player is NOT eliminated - just reset their score to secondHighest+1
+                bustedPlayers.forEach(t => {
+                    const currentTotal = getPlayerTotal(t.player.id);
+                    const diff = newBase - currentTotal;
+                    adjustmentScores[t.player.id] = diff; // Allow negative to bring score DOWN
+                    // Un-eliminate them (they were temporarily marked)
                     state.eliminatedPlayerIds.delete(t.player.id);
+                    console.log('[RummyStats]', t.player.name, 'BUSTED but CONTINUES: current:', currentTotal, 'diff:', diff, '-> new total:', currentTotal + diff);
                 });
             }
 
-            if (bustedPlayers.some(t => state.eliminatedPlayerIds.has(t.player.id))) {
+            state.rounds.push({ scores: adjustmentScores, isReset: true, bustedPlayerId: highest.player.id });
+
+            if (gapMet) {
                 showToast(
                     `💥 ${highest.player.name} busted at ${highest.total} pts (limit: ${limit})! ` +
-                    `All reset to ${newBase}. ${highest.player.name} eliminated!`,
+                    `Reset to ${newBase} & eliminated!`,
                     'warning'
                 );
             } else {
                 showToast(
                     `🔄 ${highest.player.name} busted at ${highest.total} pts (limit: ${limit})! ` +
-                    `All reset to ${newBase}. Everyone continues!`,
+                    `Reset to ${newBase} and continues!`,
                     'warning'
                 );
-
-                // Also add the busted player's adjustment score (they need to go to newBase too)
-                const bustedRemaining = bustedPlayers.filter(t => !state.eliminatedPlayerIds.has(t.player.id));
-                bustedRemaining.forEach(t => {
-                    // Remove old scores from the reset round for busted players and recalculate
-                    delete adjustmentScores[t.player.id];
-                    const currentTotal = getPlayerTotal(t.player.id);
-                    const diff = newBase - currentTotal;
-                    adjustmentScores[t.player.id] = Math.max(0, diff);
-                });
-                // Replace the round scores
-                state.rounds[state.rounds.length - 1].scores = { ...adjustmentScores };
             }
 
             resetHappened = true;
