@@ -715,7 +715,7 @@
                 <span class="hint">Second player must be within this many points of the limit</span>
             </div>
             <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">
-                <strong>Rule:</strong> When a player crosses the score limit, if 3+ players exist <em>and</em> the 2nd highest player's score is within the gap of the limit, all players reset to (2nd place score + 1). The busting player is eliminated.
+                <strong>Rule:</strong> Any player who crosses the score limit is <strong>eliminated</strong> immediately. If 3+ players exist <em>and</em> the 2nd highest player's score is within the gap of the limit, all remaining players <strong>reset</strong> to (2nd place score + 1). Otherwise the busted player(s) are just removed.
             </p>
         </div>
 
@@ -1030,75 +1030,84 @@
             const gap = getBustGap();
             const active = getActivePlayers();
 
-            if (active.length < 3) return false; // need 3+ players for auto-reset
+            if (active.length < 2) return false;
 
+            // Get all active players sorted by total (highest first)
             const totals = active.map(p => ({
                 player: p,
                 total: getPlayerTotal(p.id),
-            })).sort((a, b) => b.total - a.total); // highest first
+            })).sort((a, b) => b.total - a.total);
 
-            const highest = totals[0];
-            const secondHighest = totals[1];
+            // Find all players who crossed the limit
+            const bustedPlayers = totals.filter(t => t.total > limit);
+            if (bustedPlayers.length === 0) return false;
 
-            // Check if highest crossed the limit
-            if (highest.total > limit) {
-                // Check if second highest is within (limit - gap) of limit
-                // i.e. secondHighest.total >= limit - gap
-                if (secondHighest.total >= limit - gap) {
-                    // Auto-reset: all active players go to secondHighest.total + 1
-                    const newBase = secondHighest.total + 1;
-                    const resetPlayerId = highest.player.id;
+            const highest = bustedPlayers[0]; // highest scoring busted player
+            const secondHighest = totals.find(t => !state.eliminatedPlayerIds.has(t.player.id) && t.player.id !== highest.player.id);
 
-                    // Mark the busting player as eliminated
-                    state.eliminatedPlayerIds.add(resetPlayerId);
+            // Always eliminate the busting player(s)
+            bustedPlayers.forEach(t => {
+                state.eliminatedPlayerIds.add(t.player.id);
+            });
 
-                    // For remaining active players, adjust their scores
-                    // We do this by recalculating: set cumulative total to newBase
-                    // This means we need to adjust the latest round's scores
-                    const remainingActive = active.filter(p => p.id !== resetPlayerId);
+            let resetHappened = false;
 
-                    // Calculate what each player's total currently is
-                    // We'll add a "reset adjustment" round
-                    const adjustmentScores = {};
-                    remainingActive.forEach(p => {
-                        const currentTotal = getPlayerTotal(p.id);
-                        const diff = newBase - currentTotal;
-                        // Add the difference as a new "round" entry
-                        // But if diff is negative, we need to subtract - handled by adding negative score
-                        // Actually let's just add a new round entry with the adjustment
-                        adjustmentScores[p.id] = Math.max(0, diff); // can't go below 0
-                    });
+            // Check if reset conditions are met: 3+ active players AND second highest is within gap of limit
+            if (active.length >= 3 && secondHighest && secondHighest.total >= limit - gap) {
+                // Auto-reset: all remaining active players go to secondHighest.total + 1
+                const newBase = secondHighest.total + 1;
+                const remainingActive = active.filter(p => !state.eliminatedPlayerIds.has(p.id));
 
-                    // Also add 0 for eliminated player for consistency
-                    adjustmentScores[resetPlayerId] = getPlayerTotal(resetPlayerId); // keep their total as is
+                const adjustmentScores = {};
+                remainingActive.forEach(p => {
+                    const currentTotal = getPlayerTotal(p.id);
+                    const diff = newBase - currentTotal;
+                    adjustmentScores[p.id] = Math.max(0, diff);
+                });
 
-                    state.rounds.push({ scores: adjustmentScores, isReset: true, bustedPlayerId: resetPlayerId });
-
-                    showToast(
-                        `💥 ${highest.player.name} busted at ${highest.total} points (limit: ${limit})! ` +
-                        `All players reset to ${newBase}. ${highest.player.name} is eliminated!`,
-                        'warning'
-                    );
-
-                    renderEliminated();
-                    renderScoreboard();
-                    renderRoundInputs();
-                    updateUndoButton();
-                    updateSummary();
-
-                    // Check if game should end
-                    if (getActivePlayers().length <= 1) {
-                        state.gameFinished = true;
-                        renderRoundInputs();
-                        saveHistory();
-                        showToast(`🏆 Game Over! ${getGameWinner().player.name} wins!`, 'success');
+                // Add scores for eliminated players (keep their total unchanged)
+                state.players.forEach(p => {
+                    if (state.eliminatedPlayerIds.has(p.id) && adjustmentScores[p.id] === undefined) {
+                        adjustmentScores[p.id] = 0;
                     }
+                });
 
-                    return true;
+                state.rounds.push({ scores: adjustmentScores, isReset: true, bustedPlayerId: highest.player.id });
+
+                showToast(
+                    `💥 ${highest.player.name} busted at ${highest.total} points (limit: ${limit})! ` +
+                    `All players reset to ${newBase}. ${highest.player.name} is eliminated!`,
+                    'warning'
+                );
+
+                resetHappened = true;
+            } else {
+                // No reset - just eliminate the busted player(s)
+                const names = bustedPlayers.map(t => t.player.name).join(', ');
+                showToast(
+                    `💥 ${names} busted at over ${limit} points and ${active.length >= 3 ? 'the gap condition was not met' : 'there are not enough players'}! Eliminated.`,
+                    'warning'
+                );
+            }
+
+            renderEliminated();
+            renderScoreboard();
+            renderRoundInputs();
+            updateUndoButton();
+            updateSummary();
+
+            // Check if game should end
+            if (getActivePlayers().length <= 1) {
+                state.gameFinished = true;
+                renderRoundInputs();
+                saveHistory();
+                const winner = getGameWinner();
+                if (winner) {
+                    showToast(`🏆 Game Over! ${winner.player.name} wins!`, 'success');
                 }
             }
 
-            return false;
+            return true;
         }
 
         function renderEliminated() {
