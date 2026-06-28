@@ -678,10 +678,167 @@
         @media (max-width: 480px) {
             .round-inputs { grid-template-columns: 1fr; }
         }
+
+        /* Auth */
+        .auth-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .auth-card h1 {
+            font-size: 2rem;
+            text-align: center;
+            background: linear-gradient(90deg, #f7971e, #ffd200);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .auth-card .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 28px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #aaa;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .auth-tab.active {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            color: #1a1a2e;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .auth-form label {
+            font-size: 0.9rem;
+            color: #ccc;
+            margin-bottom: -8px;
+        }
+
+        .auth-form input {
+            padding: 12px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .auth-form input:focus {
+            border-color: #ffd200;
+        }
+
+        .auth-error {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            text-align: center;
+            min-height: 1.2em;
+        }
+
+        .user-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            padding: 0 4px;
+        }
+
+        .user-bar .username {
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+
+        .user-bar .username strong {
+            color: #ffd200;
+        }
+
+        .save-indicator {
+            font-size: 0.8rem;
+            color: #666;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .save-indicator.visible {
+            opacity: 1;
+        }
+
+        .save-indicator.saving {
+            color: #ffd200;
+        }
+
+        .save-indicator.saved {
+            color: #2ecc71;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-card">
+            <h1>🃏 RummyStats</h1>
+            <p class="subtitle">Sign in to track your scores</p>
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="loginTab" onclick="switchAuthTab('login')">Login</button>
+                <button class="auth-tab" id="registerTab" onclick="switchAuthTab('register')">Register</button>
+            </div>
+            <form class="auth-form" id="authForm" onsubmit="handleAuthSubmit(event)">
+                <label for="authUsername">Username</label>
+                <input type="text" id="authUsername" placeholder="Your username" autocomplete="username" maxlength="24" required />
+                <label for="authPassword">Password</label>
+                <input type="password" id="authPassword" placeholder="Your password" autocomplete="current-password" required />
+                <p class="auth-error" id="authError"></p>
+                <button type="submit" class="btn btn-primary" id="authSubmitBtn" style="width: 100%; justify-content: center;">
+                    Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="appContent" class="container" style="display: none;">
+        <div class="user-bar">
+            <span class="save-indicator" id="saveIndicator">Saved</span>
+            <span class="username">Signed in as <strong id="usernameDisplay"></strong></span>
+            <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+        </div>
         <header>
             <h1>🃏 RummyStats</h1>
             <p>Track your Rummy scores with auto-reset rules & game history</p>
@@ -781,7 +938,7 @@
             </div>
             <div id="gameSummary" class="game-summary"></div>
         </div>
-    </div>
+    </div><!-- end appContent -->
 
     <div id="toast" class="toast"></div>
 
@@ -802,6 +959,163 @@
     </div>
 
     <script>
+        // ==================== AUTH & PERSISTENCE ====================
+        let currentUser = null;
+        let serverHistory = [];
+        let saveTimeout = null;
+        let authMode = 'login';
+
+        async function api(path, options = {}) {
+            const res = await fetch(path, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...options.headers },
+                credentials: 'include',
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'Request failed');
+            return data;
+        }
+
+        function switchAuthTab(mode) {
+            authMode = mode;
+            $('loginTab').classList.toggle('active', mode === 'login');
+            $('registerTab').classList.toggle('active', mode === 'register');
+            $('authSubmitBtn').textContent = mode === 'login' ? 'Login' : 'Create Account';
+            $('authPassword').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
+            $('authError').textContent = '';
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const username = $('authUsername').value.trim();
+            const password = $('authPassword').value;
+            const errorEl = $('authError');
+            const btn = $('authSubmitBtn');
+            errorEl.textContent = '';
+            btn.disabled = true;
+
+            try {
+                const endpoint = authMode === 'login' ? '/api/login' : '/api/register';
+                const data = await api(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password }),
+                });
+                currentUser = data.user;
+                await enterApp(true);
+            } catch (err) {
+                errorEl.textContent = err.message;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function logout() {
+            try {
+                await api('/api/logout', { method: 'POST' });
+            } catch { /* session may already be gone */ }
+            currentUser = null;
+            serverHistory = [];
+            showAuthScreen();
+        }
+
+        function showAuthScreen() {
+            $('authScreen').style.display = 'flex';
+            $('appContent').style.display = 'none';
+            $('authUsername').value = '';
+            $('authPassword').value = '';
+            $('authError').textContent = '';
+        }
+
+        async function enterApp(showWelcome = false) {
+            $('authScreen').style.display = 'none';
+            $('appContent').style.display = 'block';
+            $('usernameDisplay').textContent = currentUser.username;
+            await loadGameData();
+            refreshUI();
+            if (showWelcome) {
+                showToast(`Welcome, ${currentUser.username}!`, 'success');
+            }
+        }
+
+        function serializeState() {
+            return {
+                players: state.players,
+                rounds: state.rounds,
+                eliminatedPlayerIds: Array.from(state.eliminatedPlayerIds),
+                gameFinished: state.gameFinished,
+                nextPlayerId: state.nextPlayerId,
+                scoreLimit: getScoreLimit(),
+                bustGap: getBustGap(),
+            };
+        }
+
+        function applyGameData(data) {
+            const game = data.currentGame || {};
+            state.players = game.players || [];
+            state.rounds = game.rounds || [];
+            state.eliminatedPlayerIds = new Set(game.eliminatedPlayerIds || []);
+            state.gameFinished = !!game.gameFinished;
+            state.nextPlayerId = game.nextPlayerId || 1;
+            if (game.scoreLimit) $('scoreLimit').value = game.scoreLimit;
+            if (game.bustGap) $('bustGap').value = game.bustGap;
+            serverHistory = data.history || [];
+        }
+
+        async function loadGameData() {
+            const data = await api('/api/game');
+            applyGameData(data);
+        }
+
+        function setSaveIndicator(status) {
+            const el = $('saveIndicator');
+            el.className = 'save-indicator visible ' + status;
+            el.textContent = status === 'saving' ? 'Saving...' : 'Saved';
+        }
+
+        function scheduleSave() {
+            if (!currentUser) return;
+            clearTimeout(saveTimeout);
+            setSaveIndicator('saving');
+            saveTimeout = setTimeout(persistState, 500);
+        }
+
+        async function persistState() {
+            if (!currentUser) return;
+            try {
+                await api('/api/game', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        currentGame: serializeState(),
+                        history: serverHistory,
+                    }),
+                });
+                setSaveIndicator('saved');
+            } catch (err) {
+                setSaveIndicator('');
+                showToast('Failed to save: ' + err.message, 'error');
+            }
+        }
+
+        function refreshUI() {
+            renderPlayers();
+            updateScoreEntryVisibility();
+            renderEliminated();
+            renderScoreboard();
+            renderRoundInputs();
+            updateUndoButton();
+            updateSummary();
+        }
+
+        async function checkAuth() {
+            try {
+                const data = await api('/api/me');
+                currentUser = data.user;
+                await enterApp();
+            } catch {
+                showAuthScreen();
+            }
+        }
+
         // ==================== STATE ====================
         const state = {
             players: [],
@@ -936,6 +1250,7 @@
             updateScoreEntryVisibility();
             renderScoreboard();
             showToast(`${name} added!`, 'success');
+            scheduleSave();
         }
 
         function removePlayer(playerId) {
@@ -957,6 +1272,7 @@
             updateUndoButton();
             renderEliminated();
             showToast(`${player.name} removed.`, 'info');
+            scheduleSave();
         }
 
         function handlePlayerKeydown(e) {
@@ -1141,6 +1457,7 @@
                 }
             }
 
+            scheduleSave();
             return true;
         }
 
@@ -1230,6 +1547,8 @@
             if (!bustTriggered) {
                 renderRoundInputs();
             }
+
+            scheduleSave();
         }
 
         // ==================== FINISH GAME ====================
@@ -1248,22 +1567,18 @@
             state.gameFinished = true;
             renderRoundInputs();
             saveHistory();
+            scheduleSave();
             showToast('Game finished! Saved to history.', 'success');
         }
 
-        // ==================== HISTORY (localStorage) ====================
+        // ==================== HISTORY (server-persisted) ====================
         function getHistory() {
-            try {
-                return JSON.parse(localStorage.getItem('rummystats_history') || '[]');
-            } catch { return []; }
+            return serverHistory;
         }
 
         function saveHistoryItem(item) {
-            const history = getHistory();
-            history.unshift(item);
-            // Keep max 50 games
-            if (history.length > 50) history.length = 50;
-            localStorage.setItem('rummystats_history', JSON.stringify(history));
+            serverHistory.unshift(item);
+            if (serverHistory.length > 50) serverHistory.length = 50;
         }
 
         function saveHistory() {
@@ -1349,8 +1664,9 @@
 
         function clearHistory() {
             if (!confirm('Delete all game history? This cannot be undone.')) return;
-            localStorage.removeItem('rummystats_history');
+            serverHistory = [];
             renderHistory();
+            scheduleSave();
             showToast('History cleared.', 'info');
         }
 
@@ -1371,6 +1687,7 @@
                 updateUndoButton();
                 updateSummary();
                 showToast('Bust/reset undone.', 'info');
+                scheduleSave();
                 return;
             }
 
@@ -1382,6 +1699,7 @@
             updateUndoButton();
             updateSummary();
             showToast(`Round ${roundNum} undone.`, 'info');
+            scheduleSave();
         }
 
         function updateUndoButton() {
@@ -1407,6 +1725,7 @@
             updateUndoButton();
             updateSummary();
             showToast('Game reset! Previous game saved to history.', 'info');
+            scheduleSave();
         }
 
         // ==================== RENDER PLAYERS ====================
@@ -1596,25 +1915,12 @@
         });
 
         // ==================== INIT ====================
-        function initDemo() {
-            const demoPlayers = ['Alice', 'Bob', 'Charlie', 'Diana'];
-            demoPlayers.forEach(name => {
-                const player = { id: state.nextPlayerId++, name };
-                state.players.push(player);
-            });
-            renderPlayers();
-            updateScoreEntryVisibility();
-            renderScoreboard();
-            showToast('Demo players loaded! Start entering scores.', 'info');
-        }
-
-        initDemo();
+        checkAuth();
         playerNameInput.addEventListener('keydown', handlePlayerKeydown);
-        renderEliminated();
 
         // Update summary when settings change
-        $('scoreLimit').addEventListener('change', () => { updateSummary(); renderScoreboard(); });
-        $('bustGap').addEventListener('change', () => { updateSummary(); });
+        $('scoreLimit').addEventListener('change', () => { updateSummary(); renderScoreboard(); scheduleSave(); });
+        $('bustGap').addEventListener('change', () => { updateSummary(); scheduleSave(); });
     </script>
 </body>
 </html>
